@@ -11,29 +11,58 @@
     <title>DigiLog - Your digital Logbook</title>
 </head>
 <body>
-    <header class="mb-auto">
-        <nav class="navbar bg-body-tertiary">
-            <div class="container-fluid">
-              <a href="/" class="navbar-brand">Navbar</a>
-          
-              <form method="post" action="/form" submit class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" >Search</button>
-                <input name="bookName" value="<%= bookName %>" hidden > 
-                <button class="btn btn-outline-success" type="submit" >New Entry </button>
-              </form>
-            </div>
-          </nav>
-          
-      </header>
-      <ul>
-        <% for (let i = 0; i < dataArray.length; i++) { %>
-            <a href="<%=bookName+"/"+dataArray[i].Date %>">
-                <li><%= dataArray[i].title %></li>
-            </a>
-        <% } %>
-    </ul>
+  <header class="mb-auto">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">DigiLog</a>
 
+            <!-- Toggler/collapsible Button for smaller screens -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navbar links and form -->
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <!-- Add any additional navigation links here -->
+                    <!-- <li class="nav-item">
+                        <a class="nav-link" href="#">Link</a>
+                    </li> -->
+                </ul>
+
+                <!-- Search Form -->
+                <form class="d-flex" method="post" action="/form">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-light" type="submit">Search</button>
+                    <input name="bookName" value="<%= bookName %>" hidden>
+                    <button class="btn btn-outline-light ms-2" type="submit">New Entry</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+</header>
+
+
+    <div class="container mt-4">
+        <div class="row">
+            <% for (let i = 0; i < dataArray.length; i++) { %>
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <form action="/delete" method="post">
+                                <input name="bookName" value="<%= bookName %>" hidden>
+                                <a href="<%="./"+dataArray[i].Date %>" class="card-title">
+                                    <%= dataArray[i].title %>
+                                </a>
+                                <input name="entryDate" value="<%= dataArray[i].Date %>" hidden>
+                                <button type="submit" class="btn btn-sm btn-danger float-end">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" crossorigin="anonymous"></script>
 </body>

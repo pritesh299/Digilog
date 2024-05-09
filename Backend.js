@@ -8,57 +8,73 @@ import fs from "fs";
 const app=express();
 const port=3000;
 const _dirName= dirname(fileURLToPath(import.meta.url))
+let books=[{Name:"Journal",path:path.join(_dirName, "books", "journal.json")}]
 
-function renderEntries(data,book_name,res,req){
+// takes data from book, renders its entries create link responsers for each entry
+function renderEntries(book,res,req){
     
-    res.render("List.ejs", {dataArray:data,bookName:book_name});
+    fs.readFile(book.path,"utf8", (err, data) => {
 
-    data.forEach(page => {
+        if (err) {
+           console.error("Error reading book file:", err);
+           res.status(500).send("Error reading book file");
+            return;
+               }
 
- app.get(`/${book_name +"/"+page.Date}`,(req,res)=>{
-     res.render("book_template.ejs",page);
- })
+       const bookData = JSON.parse(data);  
+       
+      res.render("List.ejs", {dataArray:bookData,bookName:book.Name});
+
+      bookData.forEach(entry => {
+       app.get(`/${book.Name +"/"+entry.Date}`,(req,res)=>{
+            res.render("book_template.ejs",{entry:entry,bookName:book.Name});
+           })
     });
+
+}) 
 }
 
-let books=[{Name:"Journal",path:path.join(_dirName, "books", "journal.json")}]
+//for each book renders it entries and create link responses
+function GenerateLinks(){
+    books.forEach(book=>{  
+        app.get(`/${book.Name}`,(req,res)=>{
+             renderEntries(book,res,req)
+       }) 
+    })
+    }
+GenerateLinks()
+
+
 
 app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-app.post("/form",(req,res)=>{
-    res.render("form.ejs",{bookName:req.body["bookName"]})
-})
+
+//home page response
 app.get("/",(req,res)=>{
     res.render("index.ejs",{bookList:books})
 }) 
 
-books.forEach(book=>{  
-
-    app.get(`/${book.Name}`,(req,res)=>{
-         fs.readFile(books[0].path,"utf8", (err, data) => {
-         if (err) {
-    console.error("Error reading book file:", err);
-    res.status(500).send("Error reading book file");
-    return;
-                }
-
-            const journalData = JSON.parse(data);  
-          
-      renderEntries(journalData,book.Name,res,req)
-           
-        }) 
-   }) 
+//
+app.post("/newbook",(res,req)=>{
+    
 })
-
+//from page 
+app.post("/form",(req,res)=>{
+    res.render("form.ejs",{bookName:req.body["bookName"]})
+})
+//from submit-add new entry
 app.post("/form/submit",(req,res)=>{
-  
-   let bookPath=books[books.findIndex(book => {
+   
+   let book=books[books.findIndex(book => {
         return book.Name === req.body["bookName"];
-    })].path
+    })]
 
-    fs.readFile(bookPath,"utf8", (err, data) => {
+    let bookData;
+    
+//add new entry to existing data 
+fs.readFile(book.path,"utf8", (err, data) => {
 
         if (err) {
          console.error("Error reading book file:", err);
@@ -67,23 +83,70 @@ app.post("/form/submit",(req,res)=>{
                }
         
           let newEntry={
-            title:req.body.title,
-            Date:req.body.Date,
-            description:req.body.description,
-            content:req.body.content
+            title:req.body.title.trim(),
+            Date:req.body.Date.trim(),
+            description:req.body.description.trim(),
+            content:req.body.content.trim()
           }      
-          const journalData = JSON.parse(data);  
-      
-   journalData.push(newEntry) 
-   console.log(journalData)
- 
-      
-   
-     renderEntries(journalData,req.body["bookName"],res,req) 
-      
-   
- })   
+          bookData = JSON.parse(data);
+          bookData=bookData.filter((book)=>{return book.Date!==req.body.Date.trim()})
+          bookData.push(newEntry)
+          
+          bookData=JSON.stringify(bookData)
+         fs.writeFile(book.path,bookData,(err)=>{
+                   if (err) throw err
+                  else{
+                     console.log("the file has been saved")
+                     }
+}) 
 
+       
+ })   
+res.redirect("/")
+
+
+})
+//delete an entry
+app.post("/delete",(req,res)=>{
+    let book=books[books.findIndex(book => {
+        return book.Name === req.body["bookName"];
+    })]
+
+    let bookData;
+    fs.readFile(book.path,"utf8", (err, data) => {
+
+        if (err) {
+         console.error("Error reading book file:", err);
+         res.status(500).send("Error reading book file");
+          return;
+               }
+        
+               bookData = JSON.parse(data);
+               bookData=bookData.filter((book)=>{return book.Date!==req.body["entryDate"]})
+               bookData=JSON.stringify(bookData)
+               fs.writeFile(book.path,bookData,(err)=>{
+                         if (err) throw err
+                        else{
+                           console.log("the file has been saved")
+                           }
+      }) 
+
+            })
+           
+   res.redirect("/")
+          
+})
+//update entry
+app.post("/update_entry",(req,res)=>{
+    let entry={
+          title:req.body.title.trim(),
+          Date:req.body.Date.trim(),
+          description:req.body.description.trim(),
+          content:req.body.content.trim(),
+    }
+  
+  res.render("form.ejs",{bookName:req.body["bookName"],entry:entry})
+ 
 })
 
 app.listen(port,(req,res)=>{
