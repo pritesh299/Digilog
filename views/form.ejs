@@ -8,39 +8,18 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-  <header class="mb-auto">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="/">DigiLog</a>
-
-            <!-- Toggler/collapsible Button for smaller screens -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- Navbar links and form -->
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <!-- Add any additional navigation links here -->
-                    <!-- <li class="nav-item">
-                        <a class="nav-link" href="#">Link</a>
-                    </li> -->
-                </ul>
-
-                <!-- Search Form -->
-                <form class="d-flex" method="post" action="/form">
-                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-light" type="submit">Search</button>
-                 
-                   
-                </form>
+    <header class="mb-auto">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="/">DigiLog</a>
+    
+                </div>
             </div>
-        </div>
-    </nav>
-</header>
+        </nav>
+    </header>
 
 <div class="container mt-4">
-    <form action="/form/submit" method="post">
+    <form  method="post">
         <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <textarea class="form-control" id="title" name="title" rows="1" required><%= locals.entry ? entry.title : "" %></textarea>
@@ -48,7 +27,7 @@
 
         <div class="mb-3">
             <label for="Date" class="form-label">Date</label>
-            <%console.log(entry.Date)%>
+          
             <input class="form-control" type="date" id="Date" name="Date" required <%= locals.entry ? `readonly value=${entry.Date}` : "" %> />
         </div>
 
@@ -61,11 +40,13 @@
             <label for="content" class="form-label">Content</label>
             <textarea class="form-control" id="content" name="content" rows="10" required><%= locals.entry ? entry.content : "" %></textarea>
         </div>
+ <% console.log(locals.entry) %>
+        <input name="entryId" value="<%= (locals.entry)?entry.id:"" %>" hidden>
 
-        <input type="hidden" class="form-control" id="bookName" name="bookName" value="<%= bookName %>">
-
-        <button type="submit" class="btn btn-success">Submit</button>
-        <button type="button" class="btn btn-danger">Cancel</button>
+        <button type="submit" class="btn btn-success" formmethod="post"  formaction="/form/submit">Submit</button>
+        <form>
+       <a href="./"> <button type="button" class="btn btn-danger" formmethod="get"  formaction="./" >Cancel</button></a> 
+        </form>
     </form>
 </div>
 

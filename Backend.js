@@ -4,47 +4,30 @@ import { fileURLToPath } from "url";
 import bodyParser from "body-parser";
 import path from "path";
 import fs from "fs";
+import { v4 as uuidv4 } from 'uuid';
 
 const app=express();
 const port=3000;
 const _dirName= dirname(fileURLToPath(import.meta.url))
-let books=[{Name:"Journal",path:path.join(_dirName, "books", "journal.json")}]
 
-// takes data from book, renders its entries create link responsers for each entry
-function renderEntries(book,res,req){
-    
-    fs.readFile(book.path,"utf8", (err, data) => {
-
-        if (err) {
-           console.error("Error reading book file:", err);
-           res.status(500).send("Error reading book file");
-            return;
-               }
-
-       const bookData = JSON.parse(data);  
-       
-      res.render("List.ejs", {dataArray:bookData,bookName:book.Name});
-
-      bookData.forEach(entry => {
-       app.get(`/${book.Name +"/"+entry.Date}`,(req,res)=>{
-            res.render("book_template.ejs",{entry:entry,bookName:book.Name});
-           })
-    });
-
-}) 
-}
-
-//for each book renders it entries and create link responses
-function GenerateLinks(){
-    books.forEach(book=>{  
-        app.get(`/${book.Name}`,(req,res)=>{
-             renderEntries(book,res,req)
-       }) 
-    })
+let journal = [
+    {
+        title: "Cultural Immersion in a Historic Town",
+        Date: "2024-04-25",
+        description: "Immersed myself in the heritage and traditions of a charming town.",
+        content: "Wandering through cobblestone streets lined with centuries-old buildings, I delved into the rich history of a quaint town. The aroma of local cuisine filled the air, and friendly locals shared stories of their community's past. It felt like stepping back in time."
+    },
+    {
+        title: "Stargazing in the Desert",
+        Date: "2024-04-29",
+        description: "Gazed at a dazzling night sky far from city lights.",
+        content: "Under the vast canopy of stars in the desert, I marveled at the sheer beauty and immensity of the universe. The darkness was illuminated by countless constellations, and the silence was profound. It was a humbling reminder of our place in the cosmos."
     }
-GenerateLinks()
+];
 
-
+journal.map((entry)=>{
+    entry.id=uuidv4()
+})
 
 app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -53,98 +36,59 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 //home page response
 app.get("/",(req,res)=>{
-    res.render("index.ejs",{bookList:books})
+
+    res.render("List.ejs",{dataArray:journal})
 }) 
 
-//
-app.post("/newbook",(res,req)=>{
-    
+
+app.post("/entry",(req,res)=>{
+ let entry = journal.find(entry => entry.id === req.body.entryId);
+ 
+ res.render("entry.ejs",{entry:entry})
 })
+
 //from page 
-app.post("/form",(req,res)=>{
-    res.render("form.ejs",{bookName:req.body["bookName"]})
+app.get("/new_entry",(req,res)=>{
+    res.render("form.ejs")
 })
+
 //from submit-add new entry
 app.post("/form/submit",(req,res)=>{
-   
-   let book=books[books.findIndex(book => {
-        return book.Name === req.body["bookName"];
-    })]
 
-    let bookData;
+      let existingEntryIndex=journal.findIndex(journalEntry=>journalEntry.id===req.body.entryId)
     
-//add new entry to existing data 
-fs.readFile(book.path,"utf8", (err, data) => {
+      if(existingEntryIndex>=0 &&  existingEntryIndex<journal.length){
+        journal= journal.filter(journalEntry=>journalEntry.id!==req.body.entryId)
 
-        if (err) {
-         console.error("Error reading book file:", err);
-         res.status(500).send("Error reading book file");
-          return;
-               }
-        
-          let newEntry={
-            title:req.body.title.trim(),
-            Date:req.body.Date.trim(),
-            description:req.body.description.trim(),
-            content:req.body.content.trim()
-          }      
-          bookData = JSON.parse(data);
-          bookData=bookData.filter((book)=>{return book.Date!==req.body.Date.trim()})
-          bookData.push(newEntry)
-          
-          bookData=JSON.stringify(bookData)
-         fs.writeFile(book.path,bookData,(err)=>{
-                   if (err) throw err
-                  else{
-                     console.log("the file has been saved")
-                     }
-}) 
+      }   
+    let newEntry={
+        id:uuidv4(),
+        title:req.body.title.trim(),
+        Date:req.body.Date.trim(),
+        description:req.body.description.trim(),
+        content:req.body.content.trim()
+      }  
 
-       
- })   
+    journal.push(newEntry)
 res.redirect("/")
 
 
 })
 //delete an entry
 app.post("/delete",(req,res)=>{
-    let book=books[books.findIndex(book => {
-        return book.Name === req.body["bookName"];
-    })]
-
-    let bookData;
-    fs.readFile(book.path,"utf8", (err, data) => {
-
-        if (err) {
-         console.error("Error reading book file:", err);
-         res.status(500).send("Error reading book file");
-          return;
-               }
-        
-               bookData = JSON.parse(data);
-               bookData=bookData.filter((book)=>{return book.Date!==req.body["entryDate"]})
-               bookData=JSON.stringify(bookData)
-               fs.writeFile(book.path,bookData,(err)=>{
-                         if (err) throw err
-                        else{
-                           console.log("the file has been saved")
-                           }
-      }) 
-
-            })
-           
-   res.redirect("/")
-          
+   journal= journal.filter(journalEntry=>journalEntry.id!==req.body.entryId)
+  res.redirect('/')
 })
 //update entry
 app.post("/update_entry",(req,res)=>{
+     console.log(req.body)
     let entry={
+          id:req.body.entryId,
           title:req.body.title.trim(),
           Date:req.body.Date.trim(),
           description:req.body.description.trim(),
           content:req.body.content.trim(),
     }
-  
   res.render("form.ejs",{bookName:req.body["bookName"],entry:entry})
  
 })
